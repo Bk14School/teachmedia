@@ -579,17 +579,16 @@ body{font-family:'Sarabun',sans-serif;background:var(--surface3);color:var(--tex
       <button class="modal-close" onclick="closeModal('modalSettings')"><i class="fas fa-times"></i></button>
     </div>
     <div class="modal-body">
-      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:var(--r-sm);padding:12px 16px;margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fas fa-link"></i> Google Apps Script Web App URL</div>
-        <div style="display:flex;gap:8px;">
-          <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/..." style="flex:1;padding:8px 12px;border:1.5px solid #fcd34d;border-radius:6px;font-size:12px;font-family:'Sarabun',sans-serif;">
-          <button class="btn btn-primary btn-sm" onclick="saveGasUrl()"><i class="fas fa-save"></i> บันทึก</button>
+      <div style="background:var(--surface3);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:16px;">
+        <div style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+          <i class="fas fa-lock" style="color:var(--g2);"></i>
+          <span>GAS URL: <code style="font-size:11px;background:var(--g7);padding:2px 6px;border-radius:4px;color:var(--g1);">bk14.ac.th — ฝังในโค้ดแล้ว</code></span>
         </div>
-        <p style="font-size:11px;color:#92400e;margin-top:6px;">Deploy GAS → Execute as: Me → Anyone can access</p>
+        <input type="hidden" id="gasUrlInput">
       </div>
       <div class="tab-nav" id="settingsTabNav">
         <button class="tab-btn active" onclick="switchTab('tabDropdowns','settingsTabNav')">ข้อมูลเลือก</button>
-        <button class="tab-btn" onclick="switchTab('tabAdmin','settingsTabNav')">ข้อมูลผู้บริหาร</button>
+        
       </div>
       <div class="tab-pane active" id="tabDropdowns">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -600,15 +599,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--surface3);color:var(--tex
         </div>
         <div style="text-align:right;margin-top:14px;"><button class="btn btn-primary" onclick="saveDropdowns()"><i class="fas fa-save"></i> บันทึกการตั้งค่า</button></div>
       </div>
-      <div class="tab-pane" id="tabAdmin">
-        <div class="form-grid">
-          <div class="form-group form-full"><label>ชื่อผู้บริหาร</label><input type="text" id="directorNameInput" placeholder="ชื่อ-นามสกุลผู้บริหาร"></div>
-          <div class="form-group"><label>รหัสผ่านผู้บริหาร (ใหม่)</label><input type="password" id="adminPassInput" placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"></div>
-          <div class="form-group"><label>ลายเซ็นผู้บริหาร</label><input type="file" id="directorSigFile" accept="image/*"></div>
-          <div id="directorSigPreview" style="display:none;" class="form-group form-full"><label>ลายเซ็นปัจจุบัน</label><img id="directorSigImg" style="max-height:50px;border:1px solid var(--border);border-radius:6px;padding:4px;"></div>
-        </div>
-        <div style="text-align:right;margin-top:14px;"><button class="btn btn-primary" onclick="saveAdminProfile()"><i class="fas fa-save"></i> บันทึกข้อมูลผู้บริหาร</button></div>
-      </div>
+
     </div>
   </div>
 </div>
@@ -772,11 +763,7 @@ function applySettings(s) {
   fillSelect('advLearning', s.learningAreas || []);
   fillSelect('advGrade', s.grades || []);
   fillSelect('advMediaType', s.mediaTypes || []);
-  if (s.directorName) document.getElementById('directorNameInput').value = s.directorName;
-  if (s.directorSignature) {
-    document.getElementById('directorSigImg').src = s.directorSignature;
-    document.getElementById('directorSigPreview').style.display = 'block';
-  }
+  // directorName/Sig ย้ายไป Admin Panel แล้ว — ไม่ต้อง set DOM ที่นี่
   editingDropdowns = {
     learningAreas: [...(s.learningAreas||[])],
     subjects: [...(s.subjects||[])],
@@ -1245,19 +1232,59 @@ function showAdminPanel() {
               '<span style="font-size:12px;">รับรอง</span></label></td>'+
         '</tr>';
       }).join('');
+  // สร้าง HTML แท็บผู้บริหาร
+  var dirSig = (systemSettings && systemSettings.directorSignature) || '';
+  var dirName = (systemSettings && systemSettings.directorName) || '';
+  var profileTab =
+    '<div id="adminTabProfile" style="display:none;">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">'+
+        '<div style="grid-column:1/-1;"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ชื่อผู้บริหาร</label>'+
+          '<input type="text" id="directorNameInput" value="'+esc(dirName)+'" placeholder="ชื่อ-นามสกุลผู้บริหาร" style="width:100%;padding:9px;border:1.5px solid #d1fae5;border-radius:8px;font-family:Sarabun;font-size:13px;"></div>'+
+        '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">รหัสผ่านผู้บริหาร (ใหม่)</label>'+
+          '<input type="password" id="adminPassInput" placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน" style="width:100%;padding:9px;border:1.5px solid #d1fae5;border-radius:8px;font-family:Sarabun;font-size:13px;"></div>'+
+        '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ลายเซ็นผู้บริหาร</label>'+
+          '<input type="file" id="directorSigFile" accept="image/*" style="width:100%;padding:6px;border:1.5px solid #d1fae5;border-radius:8px;font-size:12px;"></div>'+
+        (dirSig ? '<div><label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ลายเซ็นปัจจุบัน</label>'+
+          '<img src="'+dirSig+'" style="max-height:50px;border:1px solid #d1fae5;border-radius:6px;padding:4px;"></div>' : '')+
+      '</div>'+
+      '<div style="text-align:center;margin-top:14px;">'+
+        '<button onclick="saveAdminProfile()" style="background:#0d9488;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-family:Sarabun;font-size:14px;font-weight:600;"><i class="fas fa-save"></i> บันทึกข้อมูลผู้บริหาร</button>'+
+      '</div>'+
+    '</div>';
+
+  var tabNav =
+    '<div style="display:flex;border-bottom:2px solid #e5e7eb;margin-bottom:14px;">'+
+      '<button id="adminTab1" onclick="switchAdminTab(1)" style="padding:9px 16px;border:none;background:none;cursor:pointer;font-family:Sarabun;font-size:13px;font-weight:600;color:#0d9488;border-bottom:3px solid #0d9488;margin-bottom:-2px;">รับรองสื่อการสอน</button>'+
+      '<button id="adminTab2" onclick="switchAdminTab(2)" style="padding:9px 16px;border:none;background:none;cursor:pointer;font-family:Sarabun;font-size:13px;font-weight:600;color:#6b7280;border-bottom:3px solid transparent;margin-bottom:-2px;">ข้อมูลผู้บริหาร</button>'+
+    '</div>';
+
   Swal.fire({
     title: '<div style="color:#1e40af;font-size:17px;font-weight:700;"><i class="fas fa-user-shield"></i> แผงควบคุมผู้บริหาร</div>',
-    html: '<div style="text-align:left;overflow-x:auto;">'+
-      '<table style="width:100%;border-collapse:collapse;min-width:500px;">'+
-      '<thead><tr style="background:#1e40af;color:white;">'+
-      '<th style="padding:8px;font-size:11px;">วันที่</th><th style="padding:8px;font-size:11px;">ชื่อสื่อ/ครู</th>'+
-      '<th style="padding:8px;font-size:11px;">ประเภท</th><th style="padding:8px;font-size:11px;">จำนวน</th>'+
-      '<th style="padding:8px;font-size:11px;">วิชา</th><th style="padding:8px;font-size:11px;">รับรอง</th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table>'+
-      (pending.length > 0 ? '<div style="text-align:center;margin-top:14px;"><button onclick="saveAdminApprovals(checks)" style="background:#0d9488;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-family:Sarabun;font-size:14px;font-weight:600;"><i class="fas fa-save"></i> บันทึกการรับรอง</button></div>' : '')+
+    html: '<div style="text-align:left;">'+
+      tabNav+
+      '<div id="adminTabApprove" style="overflow-x:auto;">'+
+        '<table style="width:100%;border-collapse:collapse;min-width:500px;">'+
+        '<thead><tr style="background:#1e40af;color:white;">'+
+        '<th style="padding:8px;font-size:11px;">วันที่</th><th style="padding:8px;font-size:11px;">ชื่อสื่อ/ครู</th>'+
+        '<th style="padding:8px;font-size:11px;">ประเภท</th><th style="padding:8px;font-size:11px;">จำนวน</th>'+
+        '<th style="padding:8px;font-size:11px;">วิชา</th><th style="padding:8px;font-size:11px;">รับรอง</th>'+
+        '</tr></thead><tbody>'+rows+'</tbody></table>'+
+        (pending.length > 0 ? '<div style="text-align:center;margin-top:14px;"><button onclick="saveAdminApprovals(checks)" style="background:#0d9488;color:white;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-family:Sarabun;font-size:14px;font-weight:600;"><i class=\"fas fa-save\"></i> บันทึกการรับรอง</button></div>' : '')+
+      '</div>'+
+      profileTab+
     '</div>',
-    width: 700, showConfirmButton: false, showCloseButton: true,
-    didOpen: function() { window.checks = checks; }
+    width: 720, showConfirmButton: false, showCloseButton: true,
+    didOpen: function() {
+      window.checks = checks;
+      window.switchAdminTab = function(n) {
+        document.getElementById('adminTabApprove').style.display = n===1 ? 'block' : 'none';
+        document.getElementById('adminTabProfile').style.display = n===2 ? 'block' : 'none';
+        document.getElementById('adminTab1').style.color = n===1 ? '#0d9488' : '#6b7280';
+        document.getElementById('adminTab1').style.borderBottomColor = n===1 ? '#0d9488' : 'transparent';
+        document.getElementById('adminTab2').style.color = n===2 ? '#0d9488' : '#6b7280';
+        document.getElementById('adminTab2').style.borderBottomColor = n===2 ? '#0d9488' : 'transparent';
+      };
+    }
   });
 }
 
@@ -1277,18 +1304,14 @@ async function saveAdminApprovals(checks) {
 }
 
 // ── SETTINGS ──
-async function openSettings() {
+function openSettings() {
   if (systemSettings) applySettings(systemSettings);
   renderDropdownLists();
   openModal('modalSettings');
 }
 function saveGasUrl() {
-  var url = document.getElementById('gasUrlInput').value.trim();
-  if (!url) return;
-  localStorage.setItem('gasUrl', url); GAS_URL = url;
-  document.getElementById('configBanner').style.display = 'none';
-  Swal.fire({ icon:'success', title:'บันทึก URL สำเร็จ', text:'กำลังโหลดข้อมูล...', timer:1500, showConfirmButton:false });
-  loadAll();
+  // URL ฝังในโค้ดแล้ว — ไม่อนุญาตให้เปลี่ยน
+  Swal.fire({ icon:'info', title:'URL ตายตัว', text:'GAS URL ฝังในโค้ดแล้ว ไม่สามารถเปลี่ยนได้', confirmButtonColor:'#0d9488' });
 }
 function renderDropdownLists() {
   var map = { learningAreas:'ddListLA', subjects:'ddListSub', grades:'ddListGrade', mediaTypes:'ddListMT' };
@@ -1314,8 +1337,12 @@ async function saveDropdowns() {
   } else Swal.fire({ icon:'error', title:'เกิดข้อผิดพลาด', text:res.error });
 }
 async function saveAdminProfile() {
-  var data = { directorName: document.getElementById('directorNameInput').value, adminPassword: document.getElementById('adminPassInput').value };
-  var sigFile = document.getElementById('directorSigFile').files[0];
+  var nameEl = document.getElementById('directorNameInput');
+  var passEl = document.getElementById('adminPassInput');
+  var sigEl  = document.getElementById('directorSigFile');
+  if (!nameEl) { Swal.fire({icon:'warning',title:'ไม่พบฟอร์ม',confirmButtonColor:'#0d9488'}); return; }
+  var data = { directorName: nameEl.value, adminPassword: passEl ? passEl.value : '' };
+  var sigFile = sigEl ? sigEl.files[0] : null;
   if (sigFile) data.signatureFile = await readFile(sigFile);
   var res = await apiPost('saveAdminProfile', { data: data });
   if (res.success) {
